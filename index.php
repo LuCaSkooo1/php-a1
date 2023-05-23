@@ -1,44 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Logs</title>
+</head>
+<body>
+    <h1>Logs:</h1>
+    <p></p>
+    <?php
+
+        $logDate = date('H:i:s');
+        $logFile = "logs.txt";
+        $currentHour = (int) date('H');
 
 
-<?php
+        function addLog($isLate, $logDate, $logFile, $currentHour)
+        {
+            $data = null;
 
-$date = date('H:i:s');
-$file = "logs.txt";
-
-
-function addLog($isLate){
-    global $date;
-    global $file;
-    $data = null;
-
-    if (((int) date('H')) >= 8) {
-        $isLate = true;
-    }
+            if (($currentHour) >= 8) {
+                $isLate = true;
+            }
 
 
-    if ($isLate) {
-        $data = $date . " meskanie \n";
-        $isLate = true;
-    }else{
-        $data = $date . "\n";
-    };
+            if ($isLate) {
+                $data = $logDate . " meskanie";
+                $isLate = true;
+            }else{
+                $data = "\n" . $logDate;
+            };
 
-    if(((int) date('H')) >= 20 && ((int) date('H')) <= 24 ){
-        die("prichod nemoze byt zaznamenany");
-    }
+            if(($currentHour) >= 20 && ($currentHour) <= 24 ){
+                die("prichod nemoze byt zaznamenany");
+            }
+            
+
+            $handle = fopen($logFile, "a");
+            fwrite($handle, $data );
+            fclose($handle);
+        }
+
+        function getLogs($logFile)
+        {
+
+            $lines = file($logFile);
+            
+            foreach ($lines as $line) {
+                echo $line  . "<br>";
+            }
+
+        }
+
+        addLog($isLate, $logDate, $logFile, $currentHour);
+        getLogs($logFile);
+
+        ?>
     
+</body>
+</html>
 
-    $handle = fopen($file, "a");
-    fwrite($handle, $data);
-    fclose($handle);
-};
 
-function getLogs(){
-    global $file;
-    echo "Logs: \n" . file_get_contents($file);    
-};
-
-addLog(false);
-getLogs();
-?>
 
