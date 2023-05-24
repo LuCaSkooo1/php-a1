@@ -51,6 +51,8 @@
                     $log[$name] = 1;
                 }
 
+                print_r($studentFileData);
+
                 $jsonData = json_encode($log, JSON_PRETTY_PRINT);
 
                 file_put_contents($studentFile, $jsonData);
