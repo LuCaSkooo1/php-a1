@@ -1,87 +1,123 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+
 <head>
-    <title>Logs</title>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
 </head>
+
 <body>
-    <h1>Logs:</h1>
-    <form action="index.php" method="get">
-        Name: <input type="text" name="name"><br>
-        <input type="submit">
+    <form method="get" action="">
+        <label for="name">Student Name:</label>
+        <input type="text" name="name" id="studentName">
+        <input type="submit" value="Submit">
     </form>
+
+
     <?php
 
-        $logDate = date('H:i:s');
-        $logFile = "logs.txt";
-        $studentFile = "students.json";
-        $currentHour = (int) date('H');
+    class Logger
+    {
+        private $fileName;
+        private $studentsFile;
 
-        
-
-
-        function addLog($logDate, $logFile, $currentHour, $studentFile)
+        public function __construct($fileName, $studentsFile)
         {
-            $data = null;
-            $studentData = null;
+            $this->fileName = $fileName;
+            $this->studentsFile = $studentsFile;
+        }
+
+        public function echoArrivalLog()
+        {
+
+            if (file_exists($this->fileName)) {
+
+                $logContent = file_get_contents($this->fileName);
+
+
+                echo nl2br($logContent);
+            }
+        }
+
+        public function logStudentArrival($name)
+        {
 
             if (isset($_GET['name'])) {
                 $name = $_GET['name'];
-            } 
+            }
 
-            if (($currentHour) >= 8) {
-                $isLate = true;
+            $currentTime = date('Y-m-d H:i:s');
+            $arrivalTime = date('H:i', strtotime($currentTime));
+
+
+            if ($arrivalTime >= '20:00' && $arrivalTime <= '23:59') {
+                die("Error: Arrival cannot be logged between 20:00 and 24:00.");
             }
 
 
-            if ($isLate) {
-                $data = "\n" . $name . " " . $logDate . " meskanie";
-                $studentData = "\n" . $name;
-            }else{
-                $data = "\n" . $name . $logDate;
-                $studentData = "\n" . $name;
-            };
-
-            $studentFileData = file_get_contents($studentFile);
-
-                $log = json_decode($studentFileData, true);
-
-                if (array_key_exists($name, $log)) {
-                    $log[$name]++;
-                } else {
-                    $log[$name] = 1;
-                }
-
-                print_r($studentFileData);
-
-                $jsonData = json_encode($log, JSON_PRETTY_PRINT);
-
-                file_put_contents($studentFile, $jsonData);
+            $isLate = ($arrivalTime > '08:00') ? true : false;
 
 
-            if(($currentHour) >= 20 && ($currentHour) <= 24 ){
-                die("prichod nemoze byt zaznamenany");
+            $logEntry = "$currentTime - $name" . (($isLate) ? " - meskanie" : "") . PHP_EOL;
+            file_put_contents($this->fileName, $logEntry, FILE_APPEND);
+
+
+            $students = $this->loadStudents();
+            if (!isset($students[$name])) {
+                $students[$name] = 0;
             }
-            
+            $students[$name]++;
+            $this->saveStudents($students);
 
-            $handle = fopen($logFile, "a");
-            fwrite($handle, $data );
-            fclose($handle);
 
-            
+            $arrivals = $this->loadArrivals();
+            $arrivals[] = $logEntry;
         }
 
-        function getLogs($logFile)
+        private function loadStudents()
         {
-            return file_get_contents($logFile);
+            if (file_exists($this->studentsFile)) {
+                $studentsJson = file_get_contents($this->studentsFile);
+                return json_decode($studentsJson, true);
+            }
+            return [];
         }
 
-        addLog($logDate, $logFile, $currentHour, $studentFile);
-        echo nl2br(getLogs($logFile));
+        private function saveStudents($students)
+        {
+            $jsonStudents = json_encode($students, JSON_PRETTY_PRINT);
+            file_put_contents($this->studentsFile, $jsonStudents);
+        }
 
+        private function loadArrivals()
+        {
+            if (file_exists($this->fileName)) {
+
+                $arrivals = file($this->fileName, FILE_IGNORE_NEW_LINES);
+            } else {
+                $arrivals = array();
+            }
+            return $arrivals;
+        }
+
+        private function saveArrivals($arrivals)
+        {
+
+            $arrivalsData = implode(PHP_EOL, $arrivals);
+
+
+            file_put_contents($this->fileName, $arrivalsData);
+
+        }
+
+    }
+
+    $logger = new Logger('arrivals.txt', 'students.json');
+    $logger->logStudentArrival($name);
+    $logger->echoArrivalLog()
         ?>
-    
 </body>
+
 </html>
-
-
-
