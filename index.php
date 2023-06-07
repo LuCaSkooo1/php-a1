@@ -9,9 +9,10 @@
 </head>
 
 <body>
-    <form method="get" action="">
+    <h1>Student Logger</h1>
+    <form method="POST" action="">
         <label for="name">Student Name:</label>
-        <input type="text" name="name" id="studentName">
+        <input type="text" name="name" >
         <input type="submit" value="Submit">
     </form>
 
@@ -19,7 +20,8 @@
     <?php
 
     class Logger
-    {
+    {   
+
         private $fileName;
         private $studentsFile;
 
@@ -41,12 +43,16 @@
             }
         }
 
-        public function logStudentArrival($name)
+        public function logStudentArrival()
         {
 
-            if (isset($_GET['name'])) {
-                $name = $_GET['name'];
-            }
+            if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+                $name = isset($_POST['name']) ? $_POST['name'] : '';
+            } else if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+                $name = isset($_GET['name']) ? $_GET['name'] : '';
+            } else {
+                $name = '';
+}
 
             $currentTime = date('Y-m-d H:i:s');
             $arrivalTime = date('H:i', strtotime($currentTime));
@@ -74,6 +80,8 @@
 
             $arrivals = $this->loadArrivals();
             $arrivals[] = $logEntry;
+
+            $studentsLogs = $this->logStudents();
         }
 
         private function loadStudents()
@@ -112,12 +120,77 @@
 
         }
 
+        private function logStudents(){
+            $jsonFile = 'students.json';
+
+            $jsonData = file_get_contents($jsonFile);
+
+            $studentsLog = json_decode($jsonData, true);
+
+            print_r($studentsLog);
+            echo "<br>";
+        }
+
     }
 
     $logger = new Logger('arrivals.txt', 'students.json');
-    $logger->logStudentArrival($name);
+    $logger->logStudentArrival();
     $logger->echoArrivalLog()
         ?>
 </body>
 
 </html>
+<style>
+    body{
+        background-color: #252525;
+        color: white;
+        font-family: Arial, sans-serif;
+        text-align: center;
+    }
+
+    input[type="text"]{
+        width: 250px;
+        height: 25px;
+        border-radius: 50px;
+        padding-left: 10px;
+    }
+
+    input[type="submit"]{
+        background-color: #252525;
+        border-radius: 50px;
+        border: 2px solid #fff;
+        color: #fff;
+        font-weight: bold;
+        width: 100px;
+        height: 30px;
+        transition: all 300ms;
+        font-family: Arial, sans-serif;
+        margin-left: 10px
+    }
+
+    input[type="submit"]:hover {
+        color: #252525;
+        background-color: #fff;
+        transform:scale(1.1);
+    }
+
+    form{
+        margin-bottom: 50px;
+    }
+
+    @keyframes scaleLoop {
+        0% {
+            transform: scale(1);
+        }
+        50% {
+            transform: scale(1.1);
+        }
+        100% {
+            transform: scale(1);
+        }
+    }
+
+    h1 {
+        animation: scaleLoop 3s infinite;
+    }
+</style>
